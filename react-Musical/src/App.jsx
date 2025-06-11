@@ -8,8 +8,8 @@ function App() {
 
   return (
     <>
-    <h1>My name is Chinki</h1>
-    <h2>My name is bam bam bam</h2>
+    <h1></h1>
+    <h2></h2>
       <div>
         <a href="https://vite.dev" target="_blank">
           <img src={viteLogo} className="logo" alt="Vite logo" />
