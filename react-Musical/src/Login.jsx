@@ -23,7 +23,7 @@ export default function LoginPage() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-indigo-600 to-purple-700">
       <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
-        <h2 className="text-3xl font-bold text-center text-purple-700 mb-6">🎵 Welcome to TuneNest</h2>
+        <h2 className="text-3xl font-bold text-center text-purple-700 mb-6">🎵 Welcome to Sajha-Bajha</h2>
 
         {error && (
           <div className="mb-4 text-red-600 text-sm bg-red-100 p-2 rounded">
