@@ -1,115 +1,121 @@
-import { useState } from "react";
+import "../assets/css/Register.css";
+import { Link } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { useMutation } from "@tanstack/react-query";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import axios from "axios";
 
-export default function RegisterPage() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
+function Register() {
+  const apiCall = useMutation({
+    mutationKey: ["POST_USER_REGISTER"],
+    mutationFn: async (formData) => {
+      try {
+        const response = await axios.post("http://localhost:8082/user/save", formData, {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        return response.data;
+      } catch (error) {
+        throw new Error(error?.response?.data?.message || error.message);
+      }
+    },
+    onError: (error) => {
+      toast.error(`Error: ${error.message}`);
+    },
+  });
 
-  const handleRegister = (e) => {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm();
 
-    if (!name || !email || !password || !confirmPassword) {
-      setError("Please fill in all fields.");
+  const onSubmit = async (data) => {
+    if (data.password !== data.confirmPassword) {
+      toast.error("Passwords do not match.");
       return;
     }
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
+    try {
+      await apiCall.mutateAsync(data);
+      toast.success("Registration successful!");
+      console.log("Registration successful");
+      // Optional: navigate("/login");
+    } catch (error) {
+      console.error("Error during registration", error);
     }
-
-    
-    console.log("Registering:", { name, email, password });
-    setError("");
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-purple-700 to-indigo-600">
-      <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
-        <h2 className="text-3xl font-bold text-center text-purple-700 mb-6">🎶 Join TuneNest</h2>
+    <div className="register-container">
+      <div className="r-Signup-form">
+        <div className="r-Head">
+          <img src="images/logo.png" alt="logo" />
+          <h1>Signup</h1>
+        </div>
 
-        {error && (
-          <div className="mb-4 text-red-600 text-sm bg-red-100 p-2 rounded">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleRegister}>
-          <div className="mb-4">
-            <label className="block mb-1 font-medium">Full Name</label>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <div className="r-Body">
             <input
               type="text"
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="John Doe"
-              required
+              placeholder="First Name"
+              {...register("firstName", { required: true })}
             />
-          </div>
+            {errors.firstName && <p className="error-msg">First name is required.</p>}
 
-          <div className="mb-4">
-            <label className="block mb-1 font-medium">Email</label>
+            <input
+              type="text"
+              placeholder="Last Name"
+              {...register("lastName", { required: true })}
+            />
+            {errors.lastName && <p className="error-msg">Last name is required.</p>}
+
             <input
               type="email"
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              required
+              placeholder="Email"
+              {...register("email", { required: true })}
             />
+            {errors.email && <p className="error-msg">Email is required.</p>}
+
+            <input
+              type="password"
+              placeholder="Password"
+              {...register("password", { required: true })}
+            />
+            {errors.password && <p className="error-msg">Password is required.</p>}
+
+            <input
+              type="password"
+              placeholder="Confirm Password"
+              {...register("confirmPassword", { required: true })}
+            />
+            {errors.confirmPassword && (
+              <p className="error-msg">Please confirm your password.</p>
+            )}
           </div>
 
-          <div className="mb-4">
-            <label className="block mb-1 font-medium">Password</label>
-            <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-3 flex items-center text-sm text-purple-600"
-              >
-                {showPassword ? "Hide" : "Show"}
+          <div className="r-Footer">
+            <div className="r-checkbox">
+              <label>
+                <input type="checkbox" required /> I accept the terms and privacy policy.
+              </label>
+            </div>
+
+            <div className="r-button">
+              <Link to="/login" className="btn-secondary">Sign In</Link>
+              <button type="submit" disabled={apiCall.isLoading}>
+                {apiCall.isLoading ? "Signing Up..." : "Sign Up"}
               </button>
             </div>
           </div>
-
-          <div className="mb-4">
-            <label className="block mb-1 font-medium">Confirm Password</label>
-            <input
-              type={showPassword ? "text" : "password"}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="••••••••"
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
-          >
-            Create Account
-          </button>
         </form>
-
-        <p className="mt-4 text-center text-sm text-gray-600">
-          Already have an account?{" "}
-          <a href="#" className="text-purple-600 hover:underline">
-            Log in
-          </a>
-        </p>
       </div>
+
+      <ToastContainer />
     </div>
   );
 }
+
+export default Register;

@@ -1,95 +1,120 @@
-import { useState } from "react";
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
-export default function LoginPage() {
+import "../assets/css/Login.css";
+
+const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
+  const navigate = useNavigate();
+  const { handleSubmit } = useForm();
 
-  const handleLogin = (e) => {
-    e.preventDefault();
+  const handleLogin = async () => {
+    try {
+      const response = await fetch("http://localhost:8082/authenticate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
 
-    
-    if (!email || !password) {
-      setError("Please fill in all fields.");
-      return;
+      if (response.ok) {
+        const { token, userId } = await response.json();
+        localStorage.setItem("token", token);
+        localStorage.setItem("userId", userId);
+
+        // Decode the token to get user roles
+        const decodedToken = parseJwt(token);
+        console.log("Decoded Token:", decodedToken);
+
+        if (decodedToken.roles && decodedToken.roles.includes("admin")) {
+          navigate(`/admin/products`);
+        } else {
+          navigate(`/dashboard`);
+        }
+
+        toast.success("Login successful!");
+      } else {
+        toast.error("Login failed. Please check your credentials.");
+      }
+    } catch (error) {
+      console.error("Error during login:", error);
+      toast.error("An error occurred during login.");
     }
+  };
 
-    
-    console.log("Logging in with:", { email, password });
-    setError(""); 
+  // Decode JWT token
+  const parseJwt = (token) => {
+    try {
+      const base64Url = token.split(".")[1];
+      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split("")
+          .map((c) => `%${("00" + c.charCodeAt(0).toString(16)).slice(-2)}`)
+          .join("")
+      );
+      return JSON.parse(jsonPayload);
+    } catch (e) {
+      return {};
+    }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-indigo-600 to-purple-700">
-      <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
-        <h2 className="text-3xl font-bold text-center text-purple-700 mb-6">🎵 Welcome to Sajha-Bajha</h2>
-
-        {error && (
-          <div className="mb-4 text-red-600 text-sm bg-red-100 p-2 rounded">
-            {error}
+    <div className="login-container">
+      <div className="login-form">
+        <div className="login-header">
+          <div className="login-logo">
+            <img src="images/Logo.png" alt="loginlogo" />
           </div>
-        )}
+          <div className="login-text">
+            <h1>Login</h1>
+          </div>
+        </div>
 
-        <form onSubmit={handleLogin}>
-          <div className="mb-4">
-            <label className="block mb-1 font-medium">Email</label>
+        <form onSubmit={handleSubmit(handleLogin)}>
+          <div className="login-body">
             <input
-              type="email"
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              type="text"
+              placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              required
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
             />
           </div>
 
-          <div className="mb-4">
-            <label className="block mb-1 font-medium">Password</label>
-            <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-3 flex items-center text-sm text-purple-600"
-              >
-                {showPassword ? "Hide" : "Show"}
-              </button>
+          <div className="login-footer">
+            <div className="login-forgot">
+              <label>
+                <input type="checkbox" name="remember_me" /> Remember me
+              </label>
+              <a href="#">Forgot password?</a>
+            </div>
+            <div className="login-btn">
+              <button type="submit">Login</button>
+            </div>
+            <div className="login-link">
+              <label>Don't have an account?</label>{" "}
+              <Link to="/register">Register</Link>
             </div>
           </div>
-
-          <div className="flex items-center justify-between mb-4">
-            <label className="flex items-center">
-              <input type="checkbox" className="mr-2" />
-              <span className="text-sm">Remember me</span>
-            </label>
-            <a href="#" className="text-sm text-purple-600 hover:underline">
-              Forgot password?
-            </a>
-          </div>
-
-          <button
-            type="submit"
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
-          >
-            Login
-          </button>
         </form>
-
-        <p className="mt-4 text-center text-sm text-gray-600">
-          Don’t have an account?{" "}
-          <a href="#" className="text-purple-600 hover:underline">
-            Sign up
-          </a>
-        </p>
       </div>
+      <ToastContainer />
     </div>
   );
-}
+};
+
+export default Login;
