@@ -4,7 +4,7 @@ import Login from './Login';
 import Register from './Register'; 
 import Homepage from './Homepage';
 
-function App() {
+function App() { 
   return (
     <Router>
       <Routes>
